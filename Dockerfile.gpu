@@ -1,0 +1,55 @@
+FROM nvidia/cuda:8.0-cudnn6-runtime-centos7
+
+MAINTAINER ron
+
+ENV CUDNN_VERSION 6.0.21
+LABEL com.nvidia.cudnn.version="${CUDNN_VERSION}"
+
+# cuDNN license: https://developer.nvidia.com/cudnn/license_agreement
+RUN CUDNN_DOWNLOAD_SUM=9b09110af48c9a4d7b6344eb4b3e344daa84987ed6177d5c44319732f3bb7f9c && \
+    curl -fsSL http://developer.download.nvidia.com/compute/redist/cudnn/v6.0/cudnn-8.0-linux-x64-v6.0.tgz -O && \
+    echo "$CUDNN_DOWNLOAD_SUM  cudnn-8.0-linux-x64-v6.0.tgz" | sha256sum -c - && \
+    tar --no-same-owner -xzf cudnn-8.0-linux-x64-v6.0.tgz -C /usr/local --wildcards 'cuda/lib64/libcudnn.so.*' && \
+    rm cudnn-8.0-linux-x64-v6.0.tgz && \
+    ldconfig
+
+ENV CONDA_DIR /opt/conda
+ENV PATH $CONDA_DIR/bin:$PATH
+
+
+RUN yum install -y wget \
+        epel-release \
+        grive2 \
+        gcc gcc-c++ make openssl-devel \
+        bzip2 \
+        python-devel \
+        libczmq1 \
+        git \
+        bash \
+        libjpeg \
+        libczmq1-devel
+
+RUN echo 'export PATH=$CONDA_DIR/bin:$PATH' > /etc/profile.d/conda.sh && \
+    wget --quiet https://repo.continuum.io/miniconda/Miniconda3-4.0.5-Linux-x86_64.sh && \
+    bash Miniconda3-4.0.5-Linux-x86_64.sh -b -p $CONDA_DIR && \
+    rm Miniconda3-4.0.5-Linux-x86_64.sh
+
+
+RUN conda install jupyter
+RUN conda install -c conda-forge gdal=2.1 fiona
+RUN conda install shapely
+RUN conda install jupyterlab
+RUN jupyter serverextension enable --py jupyterlab --sys-prefix
+
+#RUN pip install utm
+RUN pip install tensorflow-gpu
+RUN pip --no-cache-dir install earthengine-api
+
+COPY jupyter_notebook_config.py /root/.jupyter/
+
+# TensorBoard
+EXPOSE 6006
+# IPython
+EXPOSE 8888
+
+CMD jupyter lab --allow-root --port=8888
