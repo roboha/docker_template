@@ -1,6 +1,3 @@
-# Version 1
-
-# Pull from CentOS RPM Build Image
 FROM centos:7
 
 MAINTAINER ron
@@ -9,6 +6,8 @@ ENV CONDA_DIR /opt/conda
 ENV PATH $CONDA_DIR/bin:$PATH
 
 RUN yum install -y wget \
+        epel-release \
+        grive2 \
         gcc gcc-c++ make openssl-devel \
         bzip2 \
         python-devel \
@@ -23,19 +22,15 @@ RUN echo 'export PATH=$CONDA_DIR/bin:$PATH' > /etc/profile.d/conda.sh && \
     bash Miniconda3-4.0.5-Linux-x86_64.sh -b -p $CONDA_DIR && \
     rm Miniconda3-4.0.5-Linux-x86_64.sh
 
-#RUN pwd
-#RUN yum install -y libjpeg-devel
 RUN conda install jupyter
-#fiona shapely
 RUN conda install -c conda-forge gdal=2.1 fiona
 RUN conda install shapely
-RUN pip install utm
+RUN conda install jupyterlab
+RUN jupyter serverextension enable --py jupyterlab --sys-prefix
+#RUN pip install utm
 
-RUN pip install \
- https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-1.4.0rc1-cp35-cp35m-linux_x86_64.whl
-
+RUN pip install tensorflow
 RUN pip --no-cache-dir install earthengine-api
-
 
 COPY jupyter_notebook_config.py /root/.jupyter/
 
@@ -44,8 +39,4 @@ EXPOSE 6006
 # IPython
 EXPOSE 8888
 
-#CMD /bin/bash
-#CMD python
-#CMD ["/bin/bash"]
-#RUN nohup tensorboard --logdir /root/logs &
-CMD jupyter notebook --allow-root --port=8888
+CMD jupyter lab --allow-root --port=8888
