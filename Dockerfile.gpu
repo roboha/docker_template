@@ -45,6 +45,9 @@ RUN jupyter serverextension enable --py jupyterlab --sys-prefix
 RUN pip install tensorflow-gpu
 RUN pip --no-cache-dir install earthengine-api
 
+RUN pip install matplotlib
+RUN pip install git+https://github.com/wookayin/tensorflow-plot.git@master
+
 COPY jupyter_notebook_config.py /root/.jupyter/
 
 # TensorBoard
